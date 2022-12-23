@@ -1,0 +1,15 @@
+Front_Radar_Prefix_Ports: "can_ID_112151","can_ID_111904"
+Front_Radar_Prefix_HW_Units: "Front_Radar_ID_112149","CAN_ID_111896"
+   #AttackPaths = 11 [Target: MDC (7); VDC (4)]
+
+"can_ID_112151","can_ID_111904","eth3_ID_112137","MCU_Interface_ID_112089","CAN_Interface_ID_112107"
+"can_ID_112151","can_ID_111904","can_ID_112139","MCU_Interface_ID_112117","CAN_Interface_ID_112107"
+"can_ID_112151","can_ID_111904","eth1_ID_112135","MCU_Interface_ID_112089","CAN_Interface_ID_112107"
+"can_ID_112151","can_ID_111904","eth3_ID_112137","MCU_Interface_ID_112089","ETH_Interface_ID_112105"
+"can_ID_112151","can_ID_111904","can_ID_112139","MCU_Interface_ID_112117","ETH_Interface_ID_112105"
+"can_ID_112151","can_ID_111904","eth1_ID_112135","MCU_Interface_ID_112089","ETH_Interface_ID_112105"
+"can_ID_112151","can_ID_111904","eth1_ID_112135","eth2_ID_111862","vdc_ID_111852","eth2_ID_111742"
+"can_ID_112151","can_ID_111904","eth3_ID_112137","eth4_ID_111822","OffChipNetworkInterface_ID_111838","vdc_ID_111852","eth2_ID_111742"
+"can_ID_112151","can_ID_111904","eth3_ID_112137","eth1_ID_111820","eth2_ID_111862","vdc_ID_111852","eth2_ID_111742"
+"can_ID_112151","can_ID_111904","eth1_ID_112135","eth3_ID_111866","eth4_ID_111822","OffChipNetworkInterface_ID_111838","vdc_ID_111852","eth2_ID_111742"
+

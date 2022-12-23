@@ -1,0 +1,128 @@
+%% -------------------------------------------------------------------------- %%
+%%					debugging: #show PREDICATE/NUMBER_OF_PARAMETERS
+%% -------------------------------------------------------------------------- %%
+%#show asset/1.
+%#show damage_scenario/3.
+%#show impact_rating/2.
+%#show threat_scenario/2.
+
+%% -------------------------------------------------------------------------- %%
+%%					 mapping of failure mode to security property
+%% -------------------------------------------------------------------------- %%
+%% failure_mode2security_property(FL,SP) specifies a mapping from failure mode to security property SP
+failure_mode2security_property(erroneous,integrity).
+failure_mode2security_property(loss,availability).
+
+%% -------------------------------------------------------------------------- %%
+%%		     mapping of safety impact rating to security impact rating
+%% -------------------------------------------------------------------------- %%
+%% impact_safety2security(S,C,I) specifies a mapping from the severity S and controllability C of a hazard to security impact I
+safety_impact2security_impact(s0,c0,negligible).
+safety_impact2security_impact(s0,c1,negligible).
+safety_impact2security_impact(s0,c2,negligible).
+safety_impact2security_impact(s0,c3,negligible).
+safety_impact2security_impact(s1,c0,negligible).
+safety_impact2security_impact(s1,c1,moderate).
+safety_impact2security_impact(s1,c2,moderate).
+safety_impact2security_impact(s1,c3,serious).
+safety_impact2security_impact(s2,c0,negligible).
+safety_impact2security_impact(s2,c1,moderate).
+safety_impact2security_impact(s2,c2,serious).
+safety_impact2security_impact(s2,c3,serious).
+safety_impact2security_impact(s3,c0,negligible).
+safety_impact2security_impact(s3,c1,serious).
+safety_impact2security_impact(s3,c2,serious).
+safety_impact2security_impact(s3,c3,severe).
+
+
+
+%% -------------------------------------------------------------------------- %%
+%%					 mapping of security property to attack type
+%% -------------------------------------------------------------------------- %%
+asset_type_security_property2attack_type(software,integrity,elevation_of_privilege).
+asset_type_security_property2attack_type(software,integrity,tampering).
+asset_type_security_property2attack_type(software,availability,tampering).
+asset_type_security_property2attack_type(software,availability,dos).
+
+asset_type_security_property2attack_type(topic,integrity,spoofing).
+asset_type_security_property2attack_type(topic,integrity,elevation_of_privilege).
+asset_type_security_property2attack_type(topic,availability,dos).
+
+
+asset_type_security_property2attack_type(topic,integrity,tampering).
+asset_type_security_property2attack_type(topic,availability,tampering).
+asset_type_security_property2attack_type(topic,availability,dos).
+
+%% security_property2type_attack(SP,AT) specifies a mapping from security property SP to type of attack AT
+security_property2type_attack(integrity,spoofing).
+security_property2type_attack(integrity,tampering).
+security_property2type_attack(availability,dos).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Mapping from safety elements to security elements %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% -------------------------------------------------------------------------- %%
+%%					 deriving assets from loss scenarios
+%% -------------------------------------------------------------------------- %%
+% software/functions
+asset_software(FROM) :- loss_scenario_verbose(ID_LS,FROM,TO,TOPIC,FAILURE_MODE,HAZARD),
+					    component(FROM).
+% software/functions
+asset_software(TO) :- loss_scenario_verbose(ID_LS,FROM,TO,TOPIC,FAILURE_MODE,HAZARD),
+					  component(TO).
+% signal/topic
+asset_data(TOPIC) :- loss_scenario_verbose(ID_LS,FROM,TO,TOPIC,FAILURE_MODE,HAZARD),
+					  topic(TOPIC).
+
+% hardware
+asset_hardware(ECU) :- loss_scenario_verbose(ID_LS,FROM,TO,TOPIC,FAILURE_MODE,HAZARD),
+					   component(FROM),
+					   allocation(FROM,ECU),
+					   ecu(ECU).
+
+% hardware
+asset_hardware(ECU) :- loss_scenario_verbose(ID_LS,FROM,TO,TOPIC,FAILURE_MODE,HAZARD),
+					   component(TO),
+					   allocation(TO,ECU),
+					   ecu(ECU).
+
+%% -------------------------------------------------------------------------- %%
+%%					 simplified version of assets
+%% -------------------------------------------------------------------------- %%
+asset(ASSET) :- asset_software(ASSET).
+asset(ASSET) :- asset_data(ASSET).
+asset(ASSET) :- asset_hardware(ASSET).
+
+
+%% -------------------------------------------------------------------------- %%
+%%			 deriving damage scenarios from loss scenarios/failure mode
+%% -------------------------------------------------------------------------- %%
+%% damage_scenario_to_af3(X,SECURITY_PROPERTY, HAZARD) specifies the consequences (i.e., HAZARD) of a violation of SECURITY_PROPERTY of ASSET X
+damage_scenario(ASSET,SECURITY_PROPERTY,HAZARD) :- asset_software(ASSET),
+									               loss_scenario_verbose(ID_LS,ASSET,TO,TOPIC,FAILURE_MODE,HAZARD),
+									               failure_mode2security_property(FAILURE_MODE,SECURITY_PROPERTY).	
+
+damage_scenario(ASSET,SECURITY_PROPERTY,HAZARD) :- asset_software(ASSET),
+									               loss_scenario_verbose(ID_LS,FROM,ASSET,TOPIC,FAILURE_MODE,HAZARD),
+									               failure_mode2security_property(FAILURE_MODE,SECURITY_PROPERTY).	
+
+damage_scenario(ASSET,SECURITY_PROPERTY,HAZARD) :- asset_data(ASSET),
+									               loss_scenario_verbose(ID_LS,FROM,TO,ASSET,FAILURE_MODE,HAZARD),
+									               failure_mode2security_property(FAILURE_MODE,SECURITY_PROPERTY).	
+
+
+%% -------------------------------------------------------------------------- %%
+%%			 deriving security impact rating from damage scenarios
+%% -------------------------------------------------------------------------- %%
+%% impact_rating_to_af3(X,SI) specifies the security impact rating SI of asset X (in case the damage scenario associated with X happens)
+impact_rating(ASSET,SECURITY_IMPACT) :- damage_scenario(ASSET,_,HAZARD),
+										hazard(HAZARD,SEVERITY,_,CONTROLLABILITY),
+										safety_impact2security_impact(SEVERITY,CONTROLLABILITY,SECURITY_IMPACT).
+
+%% -------------------------------------------------------------------------- %%
+%%			 deriving threat scenarios from damage scenarios
+%% -------------------------------------------------------------------------- %%
+% threat_scenario(ASSET,ATTACK) specifies a threat scenario that realizes a damage scenario associated to ASSET through attack ATTACK -> {spoofing,tampering,dos}. 
+threat_scenario(ASSET,ATTACK_TYPE) :- damage_scenario(ASSET,SECURITY_PROPERTY,_),
+									  get_asset_type(ASSET,ASSET_TYPE),
+									  asset_type_security_property2attack_type(ASSET_TYPE,SECURITY_PROPERTY,ATTACK_TYPE).

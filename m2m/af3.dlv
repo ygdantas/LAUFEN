@@ -1,0 +1,111 @@
+% mapping of ASIL assigned in AutoFOCUS3 to SafPat (arch_element_asil)
+arch_element_asil(ID,nspec) :- cpASILaf3(ID,"5"). % architecture element ID is "5" denotes that the ASIL of architecture element ID has not been assigned
+arch_element_asil(ID,d) :- cpASILaf3(ID,"4"). % architecture element ID is "4" denotes that architecture element has been assigned to ASIL D
+arch_element_asil(ID,c) :- cpASILaf3(ID,"3"). % architecture element ID is "3" denotes that architecture element has been assigned to ASIL C
+arch_element_asil(ID,b) :- cpASILaf3(ID,"2"). % architecture element ID is "2" denotes that architecture element has been assigned to ASIL B
+arch_element_asil(ID,a) :- cpASILaf3(ID,"1"). % architecture element ID is "1" denotes that architecture element has been assigned to ASIL A
+arch_element_asil(ID,qm) :- cpASILaf3(ID,"0"). % architecture element ID is "0" denotes that architecture element has been assigned to QM
+
+% mapping of safety elements from af3 to safpat
+
+% mapping of hazards to safpat
+hazard(ID,NEW_SEV,NEW_EXP,NEW_CTL) :- hazard_af3(ID,SEV,EXP,CTL), 
+                                      map_hazard_from_af3(SEV,NEW_SEV), 
+                                      map_hazard_from_af3(EXP,NEW_EXP), 
+                                      map_hazard_from_af3(CTL,NEW_CTL).
+
+map_hazard_from_af3("Severity 3",s3).
+map_hazard_from_af3("Severity 2",s2).
+map_hazard_from_af3("Severity 1",s1).
+map_hazard_from_af3("Severity 0",s0).
+map_hazard_from_af3("Exposure 4",e4).
+map_hazard_from_af3("Exposure 3",e3).
+map_hazard_from_af3("Exposure 2",e2).
+map_hazard_from_af3("Exposure 1",e1).
+map_hazard_from_af3("Exposure 0",e0).
+map_hazard_from_af3("Controllability 3",c3).
+map_hazard_from_af3("Controllability 2",c2).
+map_hazard_from_af3("Controllability 1",c1).
+map_hazard_from_af3("Controllability 0",c0).
+
+% mapping of loss scenarios to safpat
+loss_scenario(ID,CP,NEW_FAILURE_MODE,HZ) :- loss_scenario_af3(ID,CP,FAILURE_MODE,HZ), map_failure_mode_from_af3(FAILURE_MODE,NEW_FAILURE_MODE).
+
+map_failure_mode_from_af3("FAILURE_LOSS",loss).
+map_failure_mode_from_af3("FAILURE_ERRONEOUS",erroneous).
+
+
+loss_scenario_verbose(ID,FROM_CP,TO_CP,TOPIC,NEW_FAILURE_MODE,HZ) :- loss_scenario_af3(ID,FROM_CP,TO_CP,TOPIC,FAILURE_MODE,HZ), 
+                                                                     map_failure_mode_from_af3(FAILURE_MODE,NEW_FAILURE_MODE).
+
+
+
+
+
+
+% allocation of input port from the logical architecture into input ports of the platform architecture
+allocation(INPUT_PORT,INPUT_TRANSCEIVER) :- channel_with_ports(ID,OUTPUT_PORT,CP1,INPUT_PORT,CP2),
+                                            allocation(INPUT_PORT,INPUT_TASK),
+                                            allocation(INPUT_TASK,INPUT_TRANSCEIVER).
+
+% allocation of output port from the logical architecture into output ports of the platform architecture
+allocation(OUTPUT_PORT,OUTPUT_TRANSCEIVER) :- channel_with_ports(ID,OUTPUT_PORT,CP1,INPUT_PORT,CP2),
+                                              allocation(OUTPUT_PORT,OUTPUT_TASK),
+                                              allocation(OUTPUT_TASK,OUTPUT_TRANSCEIVER).
+
+% allocation of logical components into hardware units
+allocation(CP,ECU) :- component(CP),
+                      task(TASK),
+                      allocation(CP,TASK),
+                      ecu(ECU),
+                      allocation(TASK,ECU).
+
+% allocation of logical components into hardware units
+allocation(CP,ECU) :- component(CP),
+                      sub_component(SUB_CP,CP),
+                      task(TASK),
+                      allocation(SUB_CP,TASK),
+                      ecu(ECU),
+                      allocation(TASK,ECU).
+
+has_subcomponent(CP) :- component(CP),
+                        component(SUB_CP),
+                        sub_component(SUB_CP,CP).
+
+
+% allocation of logical components ports to hardware ports (via task ports)
+allocation(LOGICAL_PORT,HW_PORT) :- component_input_port(CP,LOGICAL_PORT,TOPIC), 
+                                    task_input_port(TASK,TASK_PORT),
+                                    allocation(CP,TASK),
+                                    hw_port(HW,HW_PORT),
+                                    allocation(TASK_PORT,HW_PORT).
+
+hw_port(ECU,PORT) :- ecu_port(ECU,PORT).
+hw_port(NET,PORT) :- network_port(NET,PORT).
+hw_port(CLUSTER,PORT) :- cluster_port(CLUSTER,PORT).
+
+component(NAME_ID) :- component_verbose(NAME_ID,NAME,ID).
+
+getComponentName(NAME_ID,NAME) :- component(NAME_ID), component_verbose(NAME_ID,NAME,ID).
+getComponentName(NAME_ID,NAME_ID) :- component(NAME_ID), not has_component_verbose(NAME_ID).
+getComponentID(NAME_ID,ID) :- component(NAME_ID), component_verbose(NAME_ID,NAME,ID). 
+
+has_component_verbose(NAME_ID) :- component_verbose(NAME_ID,_,_).
+
+% derive a channel from channel_with_ports 
+channel(ID,CP1,CP2) :- channel_with_ports(ID,PORT1,CP1,PORT2,CP2).
+transmission(ID,CP1,CP2) :- transmission_with_ports(ID,PORT1,CP1,PORT2,CP2).
+soa_channel(ID,CP1,CP2,TOPIC) :- channel_with_ports(ID,PORT1,CP1,PORT2,CP2),
+                                 publisher(CP1,TOPIC),
+                                 subscriber(CP2,TOPIC),
+                                 topic(TOPIC).
+
+% channels in the platform architecture are bidirectional
+transmission_with_ports(ID,PORT2,CP2,PORT1,CP1) :- transmission_with_ports(ID,PORT1,CP1,PORT2,CP2),
+                                                   hardware(CP1), hardware(CP2).        
+
+
+hardware_port(X,Y) :- ecu_port(X,Y).
+hardware_port(X,Y) :- network_port(X,Y).
+hardware_port(X,Y) :- cluster_port(X,Y).
+

@@ -1,0 +1,168 @@
+%#show insider_intruder/3.
+
+% Each attack path consists of three elements:
+%%- insider_intruder(PUBLISHER,SUBSCRIBER,AFFECT_TOPIC).
+
+%% -------------------------------------------------------------------------- %%
+%%            insider intruder reachability rules and attack rules
+%% -------------------------------------------------------------------------- %%
+attack_path_mitm(ASSET,SOURCE,TARGET) :- asset_topic(ASSET), 
+                                        threat_scenario(ASSET,ATTACK_TYPE), 
+                                        path_MITM_topic_SOA(ASSET,SOURCE,TOPIC,TARGET).
+
+insider_intruder(MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- path_MITM_topic_SOA(ASSET,MALICIOUS_CP,TARGET_CP,TARGET_TOPIC).
+
+
+% Condition (attacker can directly violate the integrity of the asset) 
+% - MITM between the publisher that publishers the ASSET and its subscribers
+%% - publisher MALICIOUS_CP of ASSET has a child SUB_MALICIOUS_CP that publishes the same topic (ASSET)
+%% - subscriber TARGET_CP subscribers to ASSET and has a child (SUB_TARGET_CP) that subscribers to the same topic (ASSET) 
+path_MITM_topic_SOA(ASSET,SUB_MALICIOUS_CP,SUB_TARGET_CP,ASSET) :- asset_data(ASSET),
+                                                                   publisher(MALICIOUS_CP,ASSET),
+                                                                   has_child_component_publisher(MALICIOUS_CP,ASSET),
+                                                                   get_child_publisher_topic(MALICIOUS_CP,ASSET,SUB_MALICIOUS_CP),
+                                                                   subscriber(TARGET_CP,ASSET),
+                                                                   has_child_component_subscriber(TARGET_CP,ASSET),
+                                                                   get_child_subscriber_topic(TARGET_CP,ASSET,SUB_TARGET_CP).
+
+% Condition (attacker can directly violate the integrity of the asset) 
+% - MITM between the publisher that publishers the ASSET and its subscribers
+%% - publisher MALICIOUS_CP of ASSET (no child of MALICIOUS_CP that publishers to the same topic)
+%% - subscriber TARGET_CP subscribers to ASSET (no child of TARGET_CP that subscribers to the same topic) 
+path_MITM_topic_SOA(ASSET,MALICIOUS_CP,TARGET_CP,ASSET) :- asset_data(ASSET),
+                                                           publisher(MALICIOUS_CP,ASSET),
+                                                           not has_child_component_publisher(MALICIOUS_CP,ASSET),
+                                                           subscriber(TARGET_CP,ASSET),
+                                                           not has_child_component_subscriber(TARGET_CP,ASSET).
+
+% Condition (attacker can directly violate the integrity of the asset) 
+% - MITM between the publisher that publishers the ASSET and its subscribers
+%% - publisher MALICIOUS_CP of ASSET (no child of MALICIOUS_CP that publishers to the same topic)
+%% - subscriber TARGET_CP subscribers to ASSET and has a child (SUB_TARGET_CP) that subscribers to the same topic (ASSET) 
+path_MITM_topic_SOA(ASSET,MALICIOUS_CP,SUB_TARGET_CP,ASSET) :- asset_data(ASSET),
+                                                               publisher(MALICIOUS_CP,ASSET),
+                                                               not has_child_component_publisher(MALICIOUS_CP,ASSET),
+                                                               subscriber(TARGET_CP,ASSET),
+                                                               has_child_component_subscriber(TARGET_CP,ASSET),
+                                                               get_child_subscriber_topic(TARGET_CP,ASSET,SUB_TARGET_CP).
+
+% Condition (attacker can directly violate the integrity of the asset) 
+% - MITM between the publisher that publishers the ASSET and its subscribers
+%% - publisher MALICIOUS_CP of ASSET has a child SUB_MALICIOUS_CP that publishes the same topic (ASSET)
+%% - subscriber TARGET_CP subscribers to ASSET (no child of TARGET_CP that subscribers to the same topic) 
+path_MITM_topic_SOA(ASSET,SUB_MALICIOUS_CP,TARGET_CP,ASSET) :- asset_data(ASSET),
+                                                               publisher(MALICIOUS_CP,ASSET),
+                                                               has_child_component_publisher(MALICIOUS_CP,ASSET),
+                                                               get_child_publisher_topic(MALICIOUS_CP,ASSET,SUB_MALICIOUS_CP),
+                                                               subscriber(TARGET_CP,ASSET),
+                                                               not has_child_component_subscriber(TARGET_CP,ASSET).
+                                                                                           
+
+
+
+
+% Condition: 
+%% - publisher TARGET_CP of ASSET has a child SUB_TARGET_CP that publishes the same topic (ASSET) 
+%% - SUB_TARGET_CP is also a subscriber of TARGET_TOPIC (topic that may be compromised affecting ASSET)
+%% - publisher MALICIOUS_CP publishers TARGET_TOPIC
+%% - publisher MALICIOUS_CP of TARGET_TOPIC has a child SUB_MALICIOUS_CP that publishes the same topic (TARGET_TOPIC)
+path_MITM_topic_SOA(ASSET,SUB_MALICIOUS_CP,SUB_TARGET_CP,TARGET_TOPIC) :- asset_data(ASSET),
+                                                                          damage_scenario(ASSET,integrity,_),
+                                                                          publisher(TARGET_CP,ASSET),
+                                                                          has_child_component_publisher(TARGET_CP,ASSET),
+                                                                          get_child_publisher_topic(TARGET_CP,ASSET,SUB_TARGET_CP),
+                                                                          subscriber(SUB_TARGET_CP,TARGET_TOPIC),
+                                                                          publisher(MALICIOUS_CP,TARGET_TOPIC),
+                                                                          has_child_component_publisher(MALICIOUS_CP,TARGET_TOPIC),
+                                                                          get_child_publisher_topic(MALICIOUS_CP,TARGET_TOPIC,SUB_MALICIOUS_CP).
+
+% Condition: 
+%% - publisher TARGET_CP of ASSET has a child SUB_TARGET_CP that publishes the same topic (ASSET) 
+%% - SUB_TARGET_CP is also a subscriber of TARGET_TOPIC (topic that may be compromised affecting ASSET)
+%% - publisher MALICIOUS_CP publishers TARGET_TOPIC
+%% - publisher MALICIOUS_CP does not have any child that publishes TARGET_TOPIC
+path_MITM_topic_SOA(ASSET,MALICIOUS_CP,SUB_TARGET_CP,TARGET_TOPIC) :- asset_data(ASSET),
+                                                                      damage_scenario(ASSET,integrity,_),
+                                                                      publisher(TARGET_CP,ASSET),
+                                                                      has_child_component_publisher(TARGET_CP,ASSET),
+                                                                      get_child_publisher_topic(TARGET_CP,ASSET,SUB_TARGET_CP),
+                                                                      subscriber(SUB_TARGET_CP,TARGET_TOPIC),
+                                                                      publisher(MALICIOUS_CP,TARGET_TOPIC),
+                                                                      not has_child_component_publisher(MALICIOUS_CP,TARGET_TOPIC).
+
+% Condition: 
+%% - publisher TARGET_CP of ASSET has a child SUB_TARGET_CP that publishes the same topic (ASSET) 
+%% - SUB_TARGET_CP is not a subscriber
+%% - TARGET_CP is a subscriber of topic TARGET_TOPIC
+%% - publisher MALICIOUS_CP publishers TARGET_TOPIC
+%% - publisher MALICIOUS_CP of TARGET_TOPIC has a child SUB_MALICIOUS_CP that publishes the same topic (TARGET_TOPIC)
+path_MITM_topic_SOA(ASSET,SUB_MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- asset_data(ASSET),
+                                                                      damage_scenario(ASSET,integrity,_),
+                                                                      publisher(TARGET_CP,ASSET),
+                                                                      has_child_component_publisher(TARGET_CP,ASSET),
+                                                                      get_child_publisher_topic(TARGET_CP,ASSET,SUB_TARGET_CP),
+                                                                      %not subscriber(SUB_TARGET_CP,TARGET_TOPIC),
+                                                                      not is_subscriber(SUB_TARGET_CP),
+                                                                      subscriber(TARGET_CP,TARGET_TOPIC),
+                                                                      publisher(MALICIOUS_CP,TARGET_TOPIC),
+                                                                      has_child_component_publisher(MALICIOUS_CP,TARGET_TOPIC),
+                                                                      get_child_publisher_topic(MALICIOUS_CP,TARGET_TOPIC,SUB_MALICIOUS_CP).
+% Condition: 
+%% - publisher TARGET_CP of ASSET has a child SUB_TARGET_CP that publishes the same topic (ASSET) 
+%% - SUB_TARGET_CP is not a subscriber
+%% - TARGET_CP is a subscriber of topic TARGET_TOPIC
+%% - publisher MALICIOUS_CP publishers TARGET_TOPIC
+%% - publisher MALICIOUS_CP does not have any child that publishes TARGET_TOPIC
+path_MITM_topic_SOA(ASSET,MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- asset_data(ASSET),
+                                                                  damage_scenario(ASSET,integrity,_),
+                                                                  publisher(TARGET_CP,ASSET),
+                                                                  has_child_component_publisher(TARGET_CP,ASSET),
+                                                                  get_child_publisher_topic(TARGET_CP,ASSET,SUB_TARGET_CP),
+                                                                  %not subscriber(SUB_TARGET_CP,TARGET_TOPIC),
+                                                                  not is_subscriber(SUB_TARGET_CP),
+                                                                  subscriber(TARGET_CP,TARGET_TOPIC),
+                                                                  publisher(MALICIOUS_CP,TARGET_TOPIC),
+                                                                  not has_child_component_publisher(MALICIOUS_CP,TARGET_TOPIC).
+
+% Condition: 
+%% - publisher TARGET_CP of ASSET does not have a child that publishes the same topic (ASSET) 
+%% - TARGET_CP is also a subscriber of TARGET_TOPIC (topic that may be compromised affecting ASSET)
+%% - publisher MALICIOUS_CP publishers TARGET_TOPIC
+%% - publisher MALICIOUS_CP of TARGET_TOPIC has a child SUB_MALICIOUS_CP that publishes the same topic (TARGET_TOPIC)
+path_MITM_topic_SOA(ASSET,SUB_MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- asset_data(ASSET),
+                                                                      damage_scenario(ASSET,integrity,_),
+                                                                      publisher(TARGET_CP,ASSET),
+                                                                      not has_child_component_publisher(TARGET_CP,ASSET),
+                                                                      subscriber(TARGET_CP,TARGET_TOPIC),
+                                                                      publisher(MALICIOUS_CP,TARGET_TOPIC),
+                                                                      has_child_component_publisher(MALICIOUS_CP,TARGET_TOPIC),
+                                                                      get_child_publisher_topic(MALICIOUS_CP,TARGET_TOPIC,SUB_MALICIOUS_CP).
+
+
+% Condition: 
+%% - publisher TARGET_CP of ASSET does not have a child that publishes the same topic (ASSET) 
+%% - TARGET_CP is also a subscriber of TARGET_TOPIC (topic that may be compromised affecting ASSET)
+%% - publisher MALICIOUS_CP publishers TARGET_TOPIC
+%% - publisher MALICIOUS_CP does not have a child that publishes the same topic (TARGET_TOPIC)
+path_MITM_topic_SOA(ASSET,MALICIOUS_CP,TARGET_CP,TARGET_TOPIC) :- asset_data(ASSET),
+                                                                  damage_scenario(ASSET,integrity,_),
+                                                                  publisher(TARGET_CP,ASSET),
+                                                                  not has_child_component_publisher(TARGET_CP,ASSET),
+                                                                  subscriber(TARGET_CP,TARGET_TOPIC),
+                                                                  publisher(MALICIOUS_CP,TARGET_TOPIC),
+                                                                  not has_child_component_publisher(MALICIOUS_CP,TARGET_TOPIC).
+
+% case - get (indirect) publisher NEW_MALICIOUS that can affect the behavior of the previous publisher LAST_FIRST
+path_MITM_topic_SOA(ASSET,NEW_MALICIOUS,LAST_MALICIOUS,TARGET_TOPIC) :- path_MITM_topic_SOA(ASSET,LAST_MALICIOUS,LAST_CP,LAST_TOPIC),
+                                                                        publisher(LAST_MALICIOUS,LAST_TOPIC),
+                                                                        subscriber(LAST_MALICIOUS,TARGET_TOPIC),
+                                                                        publisher(NEW_MALICIOUS,TARGET_TOPIC),
+                                                                        not has_child_component_publisher(NEW_MALICIOUS,TARGET_TOPIC).
+
+path_MITM_topic_SOA(ASSET,SUB_NEW_MALICIOUS,LAST_MALICIOUS,TARGET_TOPIC) :-  path_MITM_topic_SOA(ASSET,LAST_MALICIOUS,LAST_CP,LAST_TOPIC),
+                                                                             publisher(LAST_MALICIOUS,LAST_TOPIC),
+                                                                             subscriber(LAST_MALICIOUS,TARGET_TOPIC),
+                                                                             publisher(NEW_MALICIOUS,TARGET_TOPIC),
+                                                                             has_child_component_publisher(NEW_MALICIOUS,TARGET_TOPIC),
+                                                                             get_child_publisher_topic(NEW_MALICIOUS,TARGET_TOPIC,SUB_NEW_MALICIOUS).
+

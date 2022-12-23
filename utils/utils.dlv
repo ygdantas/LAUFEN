@@ -1,0 +1,115 @@
+% a logical component is a software element
+software(CP) :- component(CP).
+
+% a task is a software element
+software(CP) :- task(CP).
+
+software(CP) :- component(CP),
+		        task(TASK),
+		        allocation(CP,TASK),
+		        ecu(ECU),
+		        allocation(TASK,ECU).
+
+% ecu and network interfaces are hardware units
+hardware(ECU) :- ecu(ECU).
+hardware(NET) :- network(NET).
+hardware(CLUSTER) :- cluster(CLUSTER).
+
+topic(TOPIC) :- subscriber(CP,TOPIC).
+
+topic(TOPIC) :- publisher(CP,TOPIC).
+
+
+%% Safety Pattern
+getSafPatName(IDPAT,PAT) :-  safety_pattern(IDPAT,PAT,_,_,_,_).
+
+getSafPatRedundancy(IDPAT,REDUNDANCY) :- safety_pattern(IDPAT,PAT,elem(TARGET,REDUNDANCY,CHECKER),_,_,_).
+
+getSafPatRedundancy(IDPAT,REDUNDANCY1) :- safety_pattern(IDPAT,tripleModularRedundancy,elem(TARGET,REDUNDANCY1,REDUNDANCY2,CHECKER),_,_,_).
+getSafPatRedundancy(IDPAT,REDUNDANCY2) :- safety_pattern(IDPAT,tripleModularRedundancy,elem(TARGET,REDUNDANCY1,REDUNDANCY2,CHECKER),_,_,_).
+
+getSafPatRedundancy(IDPAT,REDUNDANCY1) :- safety_pattern(IDPAT,acceptanceVoting,elem(CP1,REDUNDANCY1,REDUNDANCY2,_,_,_,CHECKER),_,_,_).
+getSafPatRedundancy(IDPAT,REDUNDANCY2) :- safety_pattern(IDPAT,acceptanceVoting,elem(CP1,REDUNDANCY1,REDUNDANCY2,_,_,_,CHECKER),_,_,_).
+
+
+getSafPatChecker(IDPAT,CHECKER) :- safety_pattern(IDPAT,PAT,elem(_,_,CHECKER),_,_,_).
+getSafPatChecker(IDPAT,CHECKER) :- safety_pattern(IDPAT,tripleModularRedundancy,elem(TARGET,REDUNDANCY1,REDUNDANCY2,CHECKER),_,_,_).
+getSafPatChecker(IDPAT,CHECKER) :- safety_pattern(IDPAT,acceptanceVoting,elem(CP1,REDUNDANCY1,REDUNDANCY2,_,_,_,CHECKER),_,_,_).
+getSafPatChecker(IDPAT,TESTER1) :- safety_pattern(IDPAT,acceptanceVoting,elem(CP1,REDUNDANCY1,REDUNDANCY2,TESTER1,TESTER2,TESTER3,_),_,_,_).
+getSafPatChecker(IDPAT,TESTER2) :- safety_pattern(IDPAT,acceptanceVoting,elem(CP1,REDUNDANCY1,REDUNDANCY2,TESTER1,TESTER2,TESTER3,_),_,_,_).
+getSafPatChecker(IDPAT,TESTER3) :- safety_pattern(IDPAT,acceptanceVoting,elem(CP1,REDUNDANCY1,REDUNDANCY2,TESTER1,TESTER2,TESTER3,_),_,_,_).	
+getSafPatChecker(IDPAT,CHECKER) :- safety_pattern(IDPAT,monitorActuator,elem(CP1,CHECKER),_,_,_).
+
+getSafPatFaultType(IDPAT,FT_TYPE) :-  safety_pattern(IDPAT,PAT,_,_,_,_),
+						              safetyIntent(PAT,FT_TYPE,FL_TYPE,ASIL,PAT_TYPE).
+
+getSafPatFailureType(IDPAT,FL_TYPE) :-  safety_pattern(IDPAT,PAT,_,_,_,_),
+						                safetyIntent(PAT,FT_TYPE,FL_TYPE,ASIL,PAT_TYPE).
+
+getSafPatASIL(IDPAT,ASIL) :-  safety_pattern(IDPAT,PAT,_,_,_,_),
+						      safetyIntent(PAT,FT_TYPE,FL_TYPE,ASIL,PAT_TYPE).
+
+getSafPatType(IDPAT,PAT_TYPE) :-  safety_pattern(IDPAT,PAT,_,_,_,_),
+						          safetyIntent(PAT,FT_TYPE,FL_TYPE,ASIL,PAT_TYPE).
+
+%% Hazard
+getHazardSev(IDHZ,SEV) :- hazard(IDHZ,SEV,EXP,CTL) .
+getHazardExp(IDHZ,EXP) :- hazard(IDHZ,SEV,EXP,CTL) .
+getHazardCtl(IDHZ,CTL) :- hazard(IDHZ,SEV,EXP,CTL) .
+getHazardASIL(IDHZ,ASIL) :- hazard(IDHZ, SEV,EXP,CTL), asil(IDHZ,ASIL).
+
+%% Fault
+getFaultType(IDFT,hardware) :- fault(IDFT,ELEMENT),
+							   hardware(ELEMENT).
+
+getFaultType(IDFT,software) :- fault(IDFT,ELEMENT),
+							   software(ELEMENT).
+%% Safety intent
+getSafIntentHWSWType(PAT,PAT_HWSW) :- safety_intent(PAT,PAT_HWSW,PAT_FAILTYPE,PAT_ASIL,PAT_TYPE).
+getSafIntentFailureType(PAT,PAT_FAILTYPE) :- safety_intent(PAT,PAT_HWSW,PAT_FAILTYPE,PAT_ASIL,PAT_TYPE).
+getSafIntentASIL(PAT,PAT_ASIL) :- safety_intent(PAT,PAT_HWSW,PAT_FAILTYPE,PAT_ASIL,PAT_TYPE).
+getSafIntentPatType(PAT,PAT_TYPE) :- safety_intent(PAT,PAT_HWSW,PAT_FAILTYPE,PAT_ASIL,PAT_TYPE).
+
+%% Security related
+
+get_attack_type(ASSET,ATTACK_TYPE) :- threat_scenario_to_af3(ASSET,ATTACK_TYPE).
+
+get_asset_type(ASSET,software) :- asset_software(ASSET).
+get_asset_type(ASSET,topic) :- asset_data(ASSET).
+get_asset_type(ASSET,hardware) :- asset_hardware(ASSET).
+
+
+is_subscriber(CP) :- subscriber(CP,_).
+
+has_child_component_subscriber(CP,TOPIC) :- subscriber(CP,TOPIC),
+								            sub_component(SUB_CP,CP),
+								            subscriber(SUB_CP,TOPIC).
+
+get_child_subscriber_topic(CP,TOPIC,CHILD) :- subscriber(CP,TOPIC),
+										      sub_component(SUB_CP,CP),
+										      subscriber(SUB_CP,TOPIC),
+										      sub_component(CHILD,SUB_CP),
+										      subscriber(CHILD,TOPIC).
+
+
+get_child_subscriber_topic(CP,TOPIC,CHILD) :- subscriber(CP,TOPIC),
+										      sub_component(CHILD,CP),
+										      subscriber(CHILD,TOPIC),
+										      not has_child_component_subscriber(CHILD,TOPIC).
+
+
+has_child_component_publisher(CP,TOPIC) :- publisher(CP,TOPIC),
+								           sub_component(SUB_CP,CP),
+								           publisher(SUB_CP,TOPIC).
+
+
+get_child_publisher_topic(CP,TOPIC,CHILD) :- publisher(CP,TOPIC),
+										     sub_component(SUB_CP,CP),
+										     publisher(SUB_CP,TOPIC),
+										     sub_component(CHILD,SUB_CP),
+										     publisher(CHILD,TOPIC).								     
+
+get_child_publisher_topic(CP,TOPIC,CHILD) :- publisher(CP,TOPIC),
+										     sub_component(CHILD,CP),
+										     publisher(CHILD,TOPIC),
+										     not has_child_component_publisher(CHILD,TOPIC).

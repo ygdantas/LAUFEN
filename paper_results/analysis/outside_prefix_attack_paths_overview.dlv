@@ -1,0 +1,49 @@
+Bluetooth_Prefix_Ports: "usb_ID_112169","cdc_ID_111876","eth1_ID_111756"
+Bluetooth_Prefix_HW_Units: "Bluetooth_Radio_ID_112165","USB_ID_111872","CDC_ID_111746"
+	#AttackPaths = 21 [Target: MDC (18); VDC (3)]
+
+TBox_Prefix_Ports: "eth3_ID_112175"
+TBox_Prefix_HW_Units: "T_Box_ID_112171"
+   #AttackPaths = 21 [Target: MDC (18); VDC (3)]
+
+Front_Left_Camera_Prefix_Ports: "gmsl_ID_112143","viu1_ID_111884","eth1_ID_111784"
+Front_Left_Camera_Prefix_HW_Units: "Front_Left_Camera_ID_112141","GMSL_ID_111880","VIU_1_ID_111774"
+	#AttackPaths = 21 [Target: MDC (18); VDC (3)]
+
+Front_Right_Camera_Prefix_Ports: "gmsl_ID_112155","viu3_ID_111894","eth3_ID_111810"
+Front_Right_Camera_Prefix_HW_Units: "Front_Right_Camera_ID_112153","GMSL_ID_111888","VIU_3_ID_111800"
+	#AttackPaths = 21 [Target: MDC (18); VDC (3)]
+
+GPS_Prefix_Ports: "serial_port_ID_112147","viu3_ID_111910","eth3_ID_111810"
+GPS_Prefix_HW_Units: "GPS_radio_ID_112145","Serial_ID_111906","VIU_3_ID_111800" 
+	#AttackPaths = 21 [Target: MDC (18); VDC (3)]
+
+Front_Radar_Prefix_Ports: "can_ID_112151","can_ID_111904"
+Front_Radar_Prefix_HW_Units: "Front_Radar_ID_112149","CAN_ID_111896"
+   #AttackPaths = 10 [Target: MDC (6); VDC (4)]
+
+Rear_Radar_Prefix_Ports: "can_ID_112159","can_ID_111904"
+Rear_Radar_Prefix_HW_Units: "Rear_Radar_ID_112157", "CAN_ID_111896"
+   #AttackPaths = 10 [Target: MDC (6); VDC (4)]
+
+LIDAR_Prefix_Ports: "eth4_ID_112163"
+LIDAR_Prefix_HW_Units: "LiDAR_ID_112161"
+   #AttackPaths = 27 [Target: MDC (24); VDC (3)]
+
+
+# Firewall instances
+ 
+- Firewall in front of VIU3 to address attacks from GPS_radio_ID_112145 and Front_Right_Camera_Prefix_Ports
+    - Potentially addressing 42 attack paths
+- Firewall in front of CAN_ID_111896 to address attacks from Front_Radar_Prefix_Ports and Rear_Radar_Prefix_Ports
+    - Potentially addressing 20 attack paths
+- Firewall in front of VIU_1_ID_111774 to address attacks from Front_Left_Camera_Prefix_Ports
+    - Potentially addressing 21 attack paths
+- Firewall in front of SW4_ID_111832 to address attacks from LiDAR_ID_112161
+    - Potentially addressing 27 attack paths
+
+- Mutual authentication between Bluetooth_Radio_ID_112165 and client to address attacks from client of Bluetooth_Radio_ID_112165
+    - Potentially addressing 21 attack paths
+- Mutual authentication between T_Box_ID_112171 and client to address attacks from client of T_Box_ID_112171
+    - Potentially addressing 21 attack paths
+

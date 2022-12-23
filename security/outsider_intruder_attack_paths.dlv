@@ -1,0 +1,71 @@
+%#show outsider_intruder/1.
+%#show outsider_intruder_from_to_hw/3.
+%#show outsider_intruder_from_to/2.
+
+% Each attack path consists of a list of ports from hardware units (public interfaces, ECUs, network interfaces). The list shall be read from left to right.
+%%- outsider_intruder([SOURCE_PORT,....,TARGET_PORT]).
+%%- the outsider_intruder_from_to predicate shows the source of the attack path (i.e., public interface) and the target of the intruder (i.e., the affected topic)
+
+
+%% -------------------------------------------------------------------------- %%
+%%                      outsider intruder attacker rules
+%% -------------------------------------------------------------------------- %%
+path(ASSET,[Y],[ECU]) :- reachable(X,Y),
+                         attack_reachable(A,ASSET,ECU),
+                         ecu_port(ECU,Y).
+
+path(ASSET,PATH_PORT,PATH_HW) :- path(ASSET,PATHPORT0,PATHHW0),
+                                &head(PATHPORT0;X),
+                                hardware_port(HW,X),
+                                not public(HW),                 
+                                reachable(_,Y),
+                                transmission_with_ports(ID,Y,ELEM1,X,NET2),
+                                not &member(Y,PATHPORT0;),
+                                not &member(ELEM1,PATHHW0;),
+                                &insNth(PATHPORT0,Y,1;PATH_PORT),
+                                &insNth(PATHHW0,ELEM1,1;PATH_HW).               
+
+path(ASSET,PATH_PORT,PATH_HW)  :- path(ASSET,PATHPORT0,PATHHW0),
+                                &head(PATHPORT0;X),
+                                hardware_port(HW,X),
+                                not public(HW),
+                                hardware_port(HW,OTHER_PORT),
+                                transmission_with_ports(ID,Y,ELEM1,OTHER_PORT,HW),
+                                reachable(_,Y),                 
+                                not &member(Y,PATHPORT0;),
+                                not &member(ELEM1,PATHHW0;),
+                                &insNth(PATHPORT0,Y,1;PATH_PORT),
+                                &insNth(PATHHW0,ELEM1,1;PATH_HW).       
+
+outsider_intruder(PATH_PORT) :- path(ASSET,PATH_PORT,PATH_HW),
+                                &head(PATH_PORT;PUBLIC),
+                                public(PUBLIC_INTERFACE),
+                                hardware_port(PUBLIC_INTERFACE,PUBLIC).                                 
+
+
+outsider_intruder_from_to(SOURCE,TOPIC) :- outsider_intruder(PATH_PORT),
+                                           &head(PATH_PORT;PUBLIC_PORT),
+                                           public(SOURCE),
+                                           hardware_port(SOURCE,PUBLIC),
+                                            &last(PATH_PORT;TARGET_ECU_PORT),
+                                            ecu(ECU),
+                                            hardware_port(ECU,TARGET_ECU_PORT),
+                                            asset(ASSET),
+                                            allocation(ASSET,ECU),
+                                            attack_reachable(_,ASSET,ECU),
+                                            publisher(ASSET,TOPIC).
+
+outsider_intruder_from_to_hw(SOURCE,ECU,PATH_PORT) :- outsider_intruder(PATH_PORT),
+                                                      &head(PATH_PORT;PUBLIC_PORT),
+                                                      public(SOURCE),
+                                                      hardware_port(SOURCE,PUBLIC_PORT),
+                                                      &last(PATH_PORT;TARGET_ECU_PORT),
+                                                      ecu(ECU),
+                                                      hardware_port(ECU,TARGET_ECU_PORT).
+
+
+reachable(CP,X) :- transmission_with_ports(ID,Y,ELEM1,X,ELEM2),
+                   reachable(CP,Y).
+
+reachable(CP,Y) :- transmission_with_ports(ID,Y,ELEM1,X,ELEM2),
+                   reachable(CP,X). 

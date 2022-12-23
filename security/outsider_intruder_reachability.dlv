@@ -1,0 +1,170 @@
+%% -------------------------------------------------------------------------- %%
+%%                      outsider intruder reachability rules
+%% -------------------------------------------------------------------------- %%
+attack_reachable(ASSET,ASSET,HW_ASSET) :- threat_scenario(ASSET,ATTACK_TYPE), 
+                                          allocation(ASSET,HW_ASSET),
+                                          ecu_port(HW_ASSET,ECU_PORT), 
+                                          ecu(HW_ASSET), 
+                                          reachable(X,ECU_PORT),
+                                          cp1_writes_to_cp2_in_ecu(CP1,ASSET,HW_ASSET),
+                                          cp_reads_from_ecu_port(CP1,ECU_PORT).
+
+
+attack_reachable(ASSET,ASSET,HW_ASSET) :- threat_scenario(ASSET,ATTACK_TYPE), 
+                                          allocation(ASSET,HW_ASSET),
+                                          ecu_port(HW_ASSET,ECU_PORT), 
+                                          ecu(HW_ASSET), 
+                                          reachable(X,ECU_PORT),
+                                          cp_reads_from_ecu_port(ASSET,ECU_PORT).
+
+
+
+
+attack_reachable(ASSET,SUBCP, HW_ASSET) :- threat_scenario(ASSET,ATTACK_TYPE), 
+                                           sub_component(SUBCP,ASSET),
+                                            allocation(SUBCP,HW_ASSET), 
+                                            ecu_port(HW_ASSET,ECU_PORT), 
+                                            reachable(X,ECU_PORT),
+                                            cp1_writes_to_cp2_in_ecu(CP1,SUBCP,HW_ASSET),
+                                            cp_reads_from_ecu_port(CP1,ECU_PORT).
+
+
+attack_reachable(ASSET,ASSET,HW_ASSET) :- threat_scenario(ASSET,ATTACK_TYPE), 
+                                          sub_component(SUBCP,ASSET),
+                                          allocation(SUBCP,HW_ASSET), 
+                                          ecu_port(HW_ASSET,ECU_PORT), 
+                                          ecu(HW_ASSET), 
+                                          reachable(X,ECU_PORT),
+                                          cp_reads_from_ecu_port(SUBCP,ECU_PORT).
+
+ecu_reads_from_network(ECU,NET) :- ecu(ECU),
+                                   network(NET),
+                                   transmission(ID,ECU,NET).
+
+% ECU writes to a network interface
+ecu_writes_to_network(ECU,NET) :- ecu(ECU),
+                                  network(NET),
+                                  transmission(ID,ECU,NET).
+
+% Cluster writes to a network interfaces
+cluster_writes_to_network(CLUSTER,NET) :- cluster(CLUSTER),
+                                          network(NET),
+                                          transmission(ID,CLUSTER,NET).
+
+
+
+% Network interface writes to a cluster
+network_writes_to_cluster(NET,CLUSTER) :- cluster(CLUSTER),
+                                          network(NET),
+                                          transmission(ID,ECU,NET).
+
+% Network interface writes to another network interface
+ecu_writes_to_network(NET1,NET2) :- network(NET1),
+                                    network(NET2),
+                                    transmission(ID,NET1,NET2).                         
+
+
+% basic case - public ECU is accessible
+%% reachable(null,PUBLIC,[PUBLIC]) :- public(PUBLIC).
+
+reachable(null,PUBLIC_PORT) :- public(PUBLIC),
+                          ecu_port(PUBLIC,PUBLIC_PORT).
+
+reachable(null,PUBLIC_PORT) :- public(PUBLIC),
+                          network_port(PUBLIC,PUBLIC_PORT).                                     
+
+
+
+
+
+reachable(null,NET_PORT) :- ecu_port(ECU,ECU_PORT),
+                           public(ECU),
+                           network_port(NET,NET_PORT),
+                           transmission_with_ports(ID,OUTPUT_TARGET,ECU,NET_PORT,NET).
+
+reachable(null,NET2_PORT) :- public(NET1),
+                            network_port(NET1,NET1_PORT),
+                            network_port(NET2,NET2_PORT),
+                            transmission_with_ports(ID,OUTPUT_NET1,NET1,NET2_PORT,NET2).
+
+cp_reads_from_ecu_port(CP,INPUT_ECU) :- task_input_port(TASK,INPUT_TASK),
+                                        allocation(INPUT_TASK,INPUT_ECU),
+                                        allocation(CP,TASK).
+
+cp_writes_to_ecu_port(CP,OUTPUT_ECU) :- task_output_port(TASK,INPUT_TASK),
+                                        allocation(INPUT_TASK,OUTPUT_ECU),
+                                        allocation(CP,TASK).                                        
+
+cp1_writes_to_cp2_in_ecu(CP1,CP2,ECU) :- ecu(ECU),
+                                                 task(TASK1),
+                                                 allocation(TASK1,ECU),
+                                                 component(CP1),
+                                                 allocation(CP1,TASK1),
+                                                 task(TASK2),
+                                                 allocation(TASK2,ECU),
+                                                 component(CP2),                                         
+                                                 allocation(CP2,TASK2),
+                                                 signal(ID,TASK1,TASK2).
+
+cp1_writes_to_cp2_in_ecu(CP1,CP2,ECU) :- component(CP3),
+                                               component(CP1),
+                                               component(CP2),
+                                                 CP1 != CP2,
+                                                 CP2 != CP3,
+                                                 CP1 != CP3,
+                                                 cp1_writes_to_cp2_in_ecu(CP1,CP3,ECU),
+                                                 cp1_writes_to_cp2_in_ecu(CP3,CP2,ECU).
+
+ 
+
+
+is_reachable_within_ecu(INPUT_ECU,OUTPUT_ECU,ECU) :- component(CP1),
+                                                     component(CP2),
+                                                     cp1_writes_to_cp2_in_ecu(CP1,CP2,ECU),
+                                                     cp_reads_from_ecu_port(CP1,INPUT_ECU),
+                                                     cp_writes_to_ecu_port(CP2,OUTPUT_ECU).
+
+% case - a network interface (TARGET) is the last accessible element in the path
+%% ECU is added to the path if
+%%% ECU reads from TARGET 
+%%% exists a component CP allocated to ECU, 
+%%% CP reads from the network, i.e., a port of CP is allocated to the input port of ECU
+reachable(CP1,INPUT_ECU) :- reachable(CP,TARGET_PORT),
+                            network_port(TARGET,TARGET_PORT),
+                            ecu_port(ECU,INPUT_ECU),
+                            transmission_with_ports(ID,OUTPUT_TARGET,TARGET,INPUT_ECU,ECU),
+                            component(CP1),
+                            cp_reads_from_ecu_port(CP1,INPUT_ECU).
+
+reachable(CP,INPUT_NET) :- reachable(CP,TARGET_PORT),
+                          ecu_port(TARGET,TARGET_PORT),
+                          network_port(NET,INPUT_NET),
+                          transmission_with_ports(ID,OUTPUT_TARGET,TARGET,INPUT_NET,NET),
+                          cp_writes_to_ecu_port(CP,OUTPUT_TARGET).
+                          %is_reachable_within_ecu(TARGET_PORT,OUTPUT_TARGET,TARGET),   
+
+% case - a network interface (TARGET) is the last accessible element in the path
+%% another network interface (NET) is added to the path if
+%%% TARGET writes to NET 
+reachable(CP,INPUT_NET) :- reachable(CP,TARGET_PORT),
+                      network_port(TARGET,TARGET_PORT),
+                      network_port(NET,INPUT_NET),
+                      transmission_with_ports(ID,OUTPUT_TARGET,TARGET,INPUT_NET,NET).
+
+% case - a network interface (TARGET) is the last accessible element in the path
+%% a cluster CLUSTER is added to the path if
+%%% TARGET writes to CLUSTER 
+reachable(CP,INPUT_CLUSTER) :- reachable(CP,TARGET_PORT),
+                               network_port(TARGET,TARGET_PORT),
+                               cluster_port(CLUSTER,INPUT_CLUSTER),
+                               transmission_with_ports(ID,OUTPUT_TARGET,TARGET,INPUT_CLUSTER,CLUSTER).
+                            
+
+% case - a cluster (TARGET) is the last accessible element in the path
+%% a network interface NET is added to the path if
+%%% TARGET writes to NET 
+reachable(CP,NET_INPUT) :- reachable(CP,TARGET_PORT),
+                           cluster_port(TARGET,TARGET_PORT),
+                           network_port(NET,NET_INPUT),
+                           transmission_with_ports(ID,OUTPUT_TARGET,TARGET,NET_INPUT,NET).
+

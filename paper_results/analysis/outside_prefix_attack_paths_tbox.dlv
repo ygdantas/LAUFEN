@@ -1,0 +1,27 @@
+TBox_Prefix_Ports: "eth3_ID_112175"
+TBox_Prefix_HW_Units: "T_Box_ID_112171"
+   #AttackPaths = 22 [Target: MDC (19); VDC (3)]
+
+"eth3_ID_112175","mdc_ID_111830","eth3_ID_112137","MCU_Interface_ID_112089","CAN_Interface_ID_112107"
+"eth3_ID_112175","mdc_ID_111830","can_ID_112139","MCU_Interface_ID_112117","CAN_Interface_ID_112107"
+"eth3_ID_112175","mdc_ID_111830","eth1_ID_112135","MCU_Interface_ID_112089","CAN_Interface_ID_112107"
+"eth3_ID_112175","eth1_ID_111820","mdc_ID_111870","eth3_ID_112137","MCU_Interface_ID_112089","CAN_Interface_ID_112107"
+"eth3_ID_112175","eth1_ID_111820","mdc_ID_111870","can_ID_112139","MCU_Interface_ID_112117","CAN_Interface_ID_112107"
+"eth3_ID_112175","eth1_ID_111820","mdc_ID_111870","eth1_ID_112135","MCU_Interface_ID_112089","CAN_Interface_ID_112107"
+"eth3_ID_112175","eth4_ID_111822","OffChipNetworkInterface_ID_111838","eth1_ID_111856","mdc_ID_111870","eth3_ID_112137","MCU_Interface_ID_112089","CAN_Interface_ID_112107"
+"eth3_ID_112175","eth4_ID_111822","OffChipNetworkInterface_ID_111838","eth1_ID_111856","mdc_ID_111870","can_ID_112139","MCU_Interface_ID_112117","CAN_Interface_ID_112107"
+"eth3_ID_112175","eth4_ID_111822","OffChipNetworkInterface_ID_111838","eth1_ID_111856","mdc_ID_111870","eth1_ID_112135","MCU_Interface_ID_112089","CAN_Interface_ID_112107"
+"eth3_ID_112175","mdc_ID_111830","eth3_ID_112137","MCU_Interface_ID_112089","ETH_Interface_ID_112105"
+"eth3_ID_112175","mdc_ID_111830","can_ID_112139","MCU_Interface_ID_112117","ETH_Interface_ID_112105"
+"eth3_ID_112175","mdc_ID_111830","eth1_ID_112135","MCU_Interface_ID_112089","ETH_Interface_ID_112105"
+"eth3_ID_112175","eth1_ID_111820","mdc_ID_111870","eth3_ID_112137","MCU_Interface_ID_112089","ETH_Interface_ID_112105"
+"eth3_ID_112175","eth1_ID_111820","mdc_ID_111870","can_ID_112139","MCU_Interface_ID_112117","ETH_Interface_ID_112105"
+"eth3_ID_112175","eth1_ID_111820","mdc_ID_111870","eth1_ID_112135","MCU_Interface_ID_112089","ETH_Interface_ID_112105"
+"eth3_ID_112175","eth4_ID_111822","OffChipNetworkInterface_ID_111838","eth1_ID_111856","mdc_ID_111870","eth3_ID_112137","MCU_Interface_ID_112089","ETH_Interface_ID_112105"
+"eth3_ID_112175","eth4_ID_111822","OffChipNetworkInterface_ID_111838","eth1_ID_111856","mdc_ID_111870","can_ID_112139","MCU_Interface_ID_112117","ETH_Interface_ID_112105"
+"eth3_ID_112175","eth4_ID_111822","OffChipNetworkInterface_ID_111838","eth1_ID_111856","mdc_ID_111870","eth1_ID_112135","MCU_Interface_ID_112089","ETH_Interface_ID_112105"
+"eth3_ID_112175","eth4_ID_111822","OffChipNetworkInterface_ID_111838","vdc_ID_111852","eth2_ID_111742"
+"eth3_ID_112175","eth1_ID_111820","eth2_ID_111862","vdc_ID_111852","eth2_ID_111742"
+"eth3_ID_112175","mdc_ID_111830","eth1_ID_112135","eth2_ID_111862","vdc_ID_111852","eth2_ID_111742"
+
+
